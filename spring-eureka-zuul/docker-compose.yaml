@@ -1,0 +1,81 @@
+version: '3.4'
+
+services:
+  eureka-server:
+    image: singhavinash857/alphagx-usecase-repo:spring-eureka-server 
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+    restart: always
+    ports:
+      - "8761:8761"
+    expose:
+      - "8761"
+    networks:
+      - local
+
+  eureke-zuul-gateway-app:
+    image: singhavinash857/alphagx-usecase-repo:spring-eureka-zuul
+    ports:
+      - "8762:8762"
+    restart: always
+    networks:
+      - local
+    links:
+      - eureka-server
+    depends_on:
+      - eureka-server
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      
+  image-service:
+    image: singhavinash857/alphagx-usecase-repo:spring-eureka-image
+    ports:
+      - "8200:8200"
+    restart: always
+    networks:
+      - local
+    links:
+      - eureka-server
+      - spring-cloud-config-server
+    depends_on:
+      - eureka-server
+      - spring-cloud-config-server      
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_CLOUD_CONFIG_URI=http://spring-cloud-config-server:8888
+
+
+  eureka-client-gallery-app:
+    image: singhavinash857/alphagx-usecase-repo:spring-eureka-gallery
+    ports:
+      - "8100:8100"
+    restart: always
+    networks:
+      - local
+    links:
+      - eureka-server
+      - spring-cloud-config-server
+    depends_on:
+      - eureka-server
+      - spring-cloud-config-server      
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_CLOUD_CONFIG_URI=http://spring-cloud-config-server:8888
+ 
+  spring-cloud-config-server:
+    image: singhavinash857/alphagx-usecase-repo:spring-cloud-config-server
+    ports:
+      - "8888:8888"
+    expose:
+      - "8888"
+    restart: always
+    networks:
+      - local     
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://spring-cloud-config-server:8888
+
+  
+networks:
+  local:
+    # Use a custom driver
+    driver: bridge   
